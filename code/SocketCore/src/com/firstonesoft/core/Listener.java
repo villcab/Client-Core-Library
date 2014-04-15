@@ -4,7 +4,7 @@
  */
 package com.firstonesoft.core;
 
-import com.firstonesoft.event.EventListener;
+import com.firstonesoft.core.event.EventListener;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;

@@ -6,11 +6,11 @@
  */
 package com.firstonesoft.core;
 
-import com.firstonesoft.event.EventListener;
-import com.firstonesoft.event.EventListenerData;
-import com.firstonesoft.event.EventCore;
-import com.firstonesoft.event.EventSender;
-import com.firstonesoft.util.ObjectUtil;
+import com.firstonesoft.core.event.EventListener;
+import com.firstonesoft.core.event.EventListenerData;
+import com.firstonesoft.core.event.EventCore;
+import com.firstonesoft.core.event.EventSender;
+import com.firstonesoft.core.util.ObjectUtil;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -73,7 +73,38 @@ public class Core {
             }
 
             @Override
-            public void onSendComplet() {
+            public void onFailedSendState(Exception e) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void onSendSocketBytes() {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void onFailedSendSocketBytes(Exception e) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void onSendClients() {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void onFailedSendClients(Exception e) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void onSendClient() {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void onFailedSendClient(Exception e) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
             }
         };
 

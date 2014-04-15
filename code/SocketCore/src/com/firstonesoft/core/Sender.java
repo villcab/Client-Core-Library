@@ -4,11 +4,13 @@
  */
 package com.firstonesoft.core;
 
-import com.firstonesoft.event.EventSender;
+import com.firstonesoft.core.event.EventSender;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -20,7 +22,6 @@ public class Sender extends Thread {
     private static final int TO_CLIENTS = 1;
     private static final int TO_SOCKET = 2;
     private static final int TO_SOCKET_STATE = 3;
-    
     private int accion;
     private byte[] data;
     private ListenerData client;
@@ -60,42 +61,54 @@ public class Sender extends Thread {
         synchronized (this) {
             switch (accion) {
                 case TO_CLIENT:
-                    client.sendBytes(data);
-                    eventSender.onSendComplet();
+                    sendByteClient();
                     break;
                 case TO_CLIENTS:
                     sendBytesClients();
                 case TO_SOCKET:
-                    sendBytes();
+                    sendSocketBytes();
                     break;
                 case TO_SOCKET_STATE:
-                    sendState(state);
+                    sendSocketState();
                     break;
             }
         }
     }
-
-    private void sendBytesClients() {
-        for (ListenerData c : clients) {
-            c.sendBytes(data);
-            break;
+    
+    private void sendByteClient() {
+        try {
+            client.sendBytes(data);
+            eventSender.onSendClient();
+        } catch (IOException e) {
+            eventSender.onFailedSendClient(e);
         }
-        eventSender.onSendComplet();
     }
 
-    private void sendBytes() {
+    private void sendBytesClients() {
+        try {
+            for (ListenerData c : clients) {
+                c.sendBytes(data);
+            }
+            eventSender.onSendClients();
+        } catch (Exception e) {
+            eventSender.onFailedSendClients(e);
+        }
+    }
+
+    private void sendSocketBytes() {
         try {
             DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
             dos.writeLong(data.length);
             dos.write(data, 0, data.length);
             dos.flush();
-            eventSender.onSendComplet();
+            eventSender.onSendSocketBytes();
         } catch (IOException e) {
             System.out.println(e);
+            eventSender.onFailedSendSocketBytes(e);
         }
     }
 
-    private void sendState(boolean state) {
+    private void sendSocketState() {
         try {
             DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
             dos.writeBoolean(state);
@@ -103,7 +116,7 @@ public class Sender extends Thread {
             System.out.println("state enviado el state: " + state);
             eventSender.onSendState(state, key, socket);
         } catch (IOException e) {
-            System.out.println(e);
+            eventSender.onFailedSendState(e);
         }
     }
 

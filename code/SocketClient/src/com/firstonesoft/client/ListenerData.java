@@ -2,9 +2,9 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.firstonesoft.core;
+package com.firstonesoft.client;
 
-import com.firstonesoft.core.event.EventListenerData;
+import com.firstonesoft.client.event.EventListenerData;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -17,21 +17,17 @@ import java.net.Socket;
  */
 public class ListenerData extends Thread {
 
-    private String key;
-    private Socket socket;
-    private EventListenerData eventListenerData;
     private DataInputStream dis;
     private DataOutputStream dos;
     private boolean running;
+    private EventListenerData eventListenerData;
 
-    public ListenerData(String key, Socket socket) {
+    public ListenerData(Socket socket) {
         try {
-            this.socket = socket;
-            this.dis = new DataInputStream(socket.getInputStream());
-            this.dos = new DataOutputStream(socket.getOutputStream());
-            this.key = key;
+            dis = new DataInputStream(socket.getInputStream());
+            dos = new DataOutputStream(socket.getOutputStream());
         } catch (IOException e) {
-            System.out.println("ListenerData: " + e);
+            System.out.println(e);
         }
     }
 
@@ -43,7 +39,6 @@ public class ListenerData extends Thread {
                 ByteArrayOutputStream output;
                 try {
                     long size = dis.readLong();
-                    System.out.println("esperando trama");
                     eventListenerData.onNewPackage(size);
                     byte[] buffer = new byte[8388608];  // 8388608 bit => 1 mg
                     output = new ByteArrayOutputStream((int) size);
@@ -73,7 +68,7 @@ public class ListenerData extends Thread {
                 dos.flush();
                 dos.close();
             }
-            eventListenerData.onDisconnectClient(key);
+            eventListenerData.onDisconnectCore();
         } catch (IOException e) {
             System.out.println("closeListenerData > IOException: " + e);
         }
@@ -97,13 +92,5 @@ public class ListenerData extends Thread {
 
     public void setRunning(boolean running) {
         this.running = running;
-    }
-
-    public String getKey() {
-        return key;
-    }
-
-    public Socket getSocket() {
-        return socket;
     }
 }
