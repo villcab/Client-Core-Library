@@ -6,10 +6,14 @@ package com.firstonesoft.sample.core;
 
 import com.firstonesoft.core.Core;
 import com.firstonesoft.core.event.EventCore;
+import com.firstonesoft.core.util.ObjectUtil;
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.DefaultListModel;
+import javax.swing.ImageIcon;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -23,11 +27,10 @@ public class frmCore extends javax.swing.JFrame {
     private Core core;
     private EventCore eventCore;
     private Map<String, Object> keys;
-    
+
     public frmCore() {
         initComponents();
         this.eventCore = new EventCore() {
-
             @Override
             public void onConnectClient(String key) {
                 modelClient.addElement(key);
@@ -42,23 +45,33 @@ public class frmCore extends javax.swing.JFrame {
 
             @Override
             public void onNewPackage(long size) {
-                
+//                model.addElement("LLegando bytes tamaño: " + size);
             }
 
             @Override
             public void onNewTrama(int bytesRead) {
-                
+//                model.addElement("LLegando trama de bytes: " + bytesRead);
+                updateProgress(bytesRead);
             }
 
             @Override
             public void onNewPackageComplet(byte[] data) {
-                
+                model.addElement("Bytes completos: " + data.length);
+                Object o = ObjectUtil.createObject(data);
+                if (o instanceof ImageIcon) {
+                    ImageIcon i = (ImageIcon) o;
+                    dlgImage n = new dlgImage(null, true);
+                    n.setImageIcon(i);
+                    n.show();
+                }
+                if (o instanceof File) {
+                    model.addElement(o);
+                }
             }
-
         };
         init();
     }
-    
+
     private void init() {
         try {
             keys = new HashMap<String, Object>();
@@ -66,13 +79,13 @@ public class frmCore extends javax.swing.JFrame {
             keys.put("key2", "tranca sur");
             keys.put("key3", "tranca este");
             keys.put("key4", "tranca oeste");
-            
+
             jLabel2.setText(String.valueOf(0));
             core = new Core(PORT_CORE);
             core.setEventCore(eventCore);
             core.openSession(keys);
             model.addElement("Core iniciado correctamente.");
-            
+
             //colocamos el boton disable
             jButton1.setEnabled(false);
         } catch (IOException e) {
@@ -92,6 +105,7 @@ public class frmCore extends javax.swing.JFrame {
         jList2 = new javax.swing.JList();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
+        progress = new javax.swing.JProgressBar();
         jScrollPane1 = new javax.swing.JScrollPane();
         jList1 = new javax.swing.JList();
 
@@ -117,12 +131,14 @@ public class frmCore extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 258, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jScrollPane2)
+                    .addComponent(progress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -135,7 +151,9 @@ public class frmCore extends javax.swing.JFrame {
                     .addComponent(jLabel1)
                     .addComponent(jLabel2))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 380, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(progress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
@@ -168,9 +186,15 @@ public class frmCore extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
-    /**
-     * @param args the command line arguments
-     */
+    private void updateProgress(final int size) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                progress.setValue(size);
+            }
+        });
+    }
+
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -212,5 +236,6 @@ public class frmCore extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JProgressBar progress;
     // End of variables declaration//GEN-END:variables
 }
