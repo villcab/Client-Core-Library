@@ -4,6 +4,8 @@
  */
 package com.firstonesoft.client.event;
 
+import java.io.IOException;
+
 /**
  *
  * @author Bismarck
@@ -11,6 +13,6 @@ package com.firstonesoft.client.event;
 public interface EventSender {
     
     public void onSendBytes();
-    public void onFailedSendBytes(Exception e);
+    public void onFailedSendBytes(IOException e);
     
 }

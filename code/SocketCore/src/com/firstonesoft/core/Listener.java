@@ -31,16 +31,12 @@ public class Listener extends Thread {
             synchronized (this) {
                 try {
                     Socket clientSocket;
-                    System.out.println("Esperando conexion de algun cliente");
                     clientSocket = serverSocket.accept();
-                    System.out.println("cliente conectado: " + clientSocket);
                     DataInputStream dis = new DataInputStream(clientSocket.getInputStream());
-                    System.out.println("Esperando a recibir su key");
                     String key = dis.readUTF();
-                    System.out.println("key recibido: " + key);
                     eventListener.onConnectClient(key, clientSocket);
                 } catch (IOException e) {
-                    System.out.println("Fallo al intentar conexion del cliente:" + e);
+                    e.printStackTrace();
                 }
             }
         }

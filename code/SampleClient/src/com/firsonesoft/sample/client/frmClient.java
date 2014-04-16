@@ -8,6 +8,7 @@ import com.firstonesoft.client.Client;
 import com.firstonesoft.client.event.EventClient;
 import com.firstonesoft.client.util.ObjectUtil;
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import javax.swing.DefaultComboBoxModel;
@@ -21,7 +22,7 @@ import javax.swing.JFileChooser;
  */
 public class frmClient extends javax.swing.JFrame implements EventClient {
 
-    private static final String IP_CORE = "localhost";
+    private static final String IP_CORE = "192.168.43.190";
     private static final int PORT_CORE = 1234;
     
     private DefaultListModel model = new DefaultListModel();
@@ -36,7 +37,7 @@ public class frmClient extends javax.swing.JFrame implements EventClient {
     private void init() {
         cliente = new Client(IP_CORE, PORT_CORE);
         cliente.setEventClient(this);
-        cliente.connect();
+//        cliente.connect();
     }
 
     
@@ -235,7 +236,7 @@ public class frmClient extends javax.swing.JFrame implements EventClient {
     }
 
     @Override
-    public void onFailedConnect(Exception e) {
+    public void onFailedConnect(IOException e) {
         model.addElement(e);
         jButton1.setEnabled(true);
     }
@@ -249,7 +250,7 @@ public class frmClient extends javax.swing.JFrame implements EventClient {
     }
 
     @Override
-    public void onFailedReceiveDataKeys(Exception e) {
+    public void onFailedReceiveDataKeys(IOException e) {
         model.addElement(e);
         jButton1.setEnabled(true);
     }
@@ -275,8 +276,8 @@ public class frmClient extends javax.swing.JFrame implements EventClient {
     }
 
     @Override
-    public void onDisconnectCore() {
-        model.addElement("Se ha perdido la conexion con el Core");
+    public void onDisconnectCore(IOException e) {
+        model.addElement("Se ha perdido la conexion con el Core: " + e.getMessage());
         jButton1.setEnabled(true);
     }
 

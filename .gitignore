@@ -9,3 +9,7 @@
 /code/SampleCore/build/
 /code/SocketClient/build/
 /code/SampleClient/build/
+/code/SampleCore/dist/
+/code/SocketCore/dist/
+/code/SampleClient/dist/
+/code/SocketClient/dist/

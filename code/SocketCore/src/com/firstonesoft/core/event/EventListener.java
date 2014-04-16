@@ -4,6 +4,7 @@
  */
 package com.firstonesoft.core.event;
 
+import java.io.IOException;
 import java.net.Socket;
 
 /**
@@ -12,6 +13,6 @@ import java.net.Socket;
  */
 public interface EventListener {
     
-    public void onConnectClient(String key, Socket socket);
+    public void onConnectClient(String key, Socket socket) throws IOException ;
     
 }

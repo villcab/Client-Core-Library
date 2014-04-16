@@ -5,7 +5,6 @@
 package com.firstonesoft.client;
 
 import com.firstonesoft.client.event.EventListenerData;
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -27,7 +26,7 @@ public class ListenerData extends Thread {
             dis = new DataInputStream(socket.getInputStream());
             dos = new DataOutputStream(socket.getOutputStream());
         } catch (IOException e) {
-            System.out.println(e);
+            e.printStackTrace();
         }
     }
 
@@ -36,20 +35,21 @@ public class ListenerData extends Thread {
         while (running) {
             synchronized (this) {
                 int bytesRead;
-                ByteArrayOutputStream output;
+                int posRead = 0;
+                byte [] output;
                 try {
                     long size = dis.readLong();
                     eventListenerData.onNewPackage(size);
-                    byte[] buffer = new byte[8388608];  // 8388608 bit => 1 mg
-                    output = new ByteArrayOutputStream((int) size);
-                    while (size > 0 && (bytesRead = dis.read(buffer, 0, (int) Math.min(buffer.length, size))) != -1) {
+                    byte[] buffer = new byte[1048576];  // 1048576 byte => 1 mg
+                    output = new byte[(int)size];
+                    while (posRead < size && (bytesRead = dis.read(buffer, 0, (int) Math.min(buffer.length, size))) != -1) {
                         eventListenerData.onNewTrama(bytesRead);
-                        output.write(buffer, 0, bytesRead);
-                        size -= bytesRead;
+                        System.arraycopy(buffer, 0, output, posRead, bytesRead);
+                        posRead += bytesRead;
                     }
-                    eventListenerData.onNewPackageComplet(output.toByteArray());
+                    eventListenerData.onNewPackageComplet(output);
                 } catch (IOException e) {
-                    closeListenerData();
+                    closeListenerData(e);
                 }
             }
         }
@@ -58,7 +58,7 @@ public class ListenerData extends Thread {
     /**
      * *** CUANDO SE DESCONECTA UN CLIENTE ****
      */
-    public void closeListenerData() {
+    public void closeListenerData(IOException e) {
         try {
             running = false;
             if (dis != null) {
@@ -68,9 +68,9 @@ public class ListenerData extends Thread {
                 dos.flush();
                 dos.close();
             }
-            eventListenerData.onDisconnectCore();
-        } catch (IOException e) {
-            System.out.println("closeListenerData > IOException: " + e);
+            eventListenerData.onDisconnectCore(e);
+        } catch (IOException ex) {
+            ex.printStackTrace();
         }
     }
 
@@ -79,7 +79,7 @@ public class ListenerData extends Thread {
      */
     public void sendBytes(byte[] data) throws IOException {
         dos.writeLong(data.length);
-        dos.write(data, 0, data.length);
+        dos.write(data);
         dos.flush();
     }
 

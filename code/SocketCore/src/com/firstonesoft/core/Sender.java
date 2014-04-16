@@ -20,6 +20,7 @@ public class Sender extends Thread {
     private static final int TO_CLIENTS = 1;
     private static final int TO_SOCKET = 2;
     private static final int TO_SOCKET_STATE = 3;
+    
     private int accion;
     private byte[] data;
     private ListenerData client;
@@ -111,7 +112,6 @@ public class Sender extends Thread {
             DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
             dos.writeBoolean(state);
             dos.flush();
-            System.out.println("state enviado el state: " + state);
             eventSender.onSendState(state, key, socket);
         } catch (IOException e) {
             eventSender.onFailedSendState(e);

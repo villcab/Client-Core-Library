@@ -20,8 +20,10 @@ import java.util.Map;
  *
  * @author Bismarck
  */
-public class Client {
+public class Client implements EventListenerData, EventSender {
 
+    private int maxBufferSize;
+    
     private int port;
     private String ip;
     private Socket clientSocket;
@@ -30,47 +32,19 @@ public class Client {
     private ListenerData listenerData;
     
     private EventClient eventClient;
-    private EventListenerData eventListenerData;
-    private EventSender eventSender;
 
     public Client(String ip, int port) {
         this.ip = ip;
         this.port = port;
-        this.eventListenerData = new EventListenerData() {
-
-            @Override
-            public void onNewPackage(long size) {
-                eventClient.onNewPackage(size);
-            }
-
-            @Override
-            public void onNewTrama(int bytesRead) {
-                eventClient.onNewTrama(bytesRead);
-            }
-
-            @Override
-            public void onNewPackageComplet(byte[] data) {
-                eventClient.onNewPackageComplet(data);
-            }
-
-            @Override
-            public void onDisconnectCore() {
-                eventClient.onDisconnectCore();
-            }
-        };
-        this.eventSender = new EventSender() {
-
-            @Override
-            public void onSendBytes() {
-                
-            }
-
-            @Override
-            public void onFailedSendBytes(Exception e) {
-                
-            }
-        };
+        this.maxBufferSize = 1048576; // 1048576 Bytes = 1 Mg
     }
+
+    public Client(String ip, int port, int maxBufferSize) {
+        this.ip = ip;
+        this.port = port;
+        this.maxBufferSize = maxBufferSize;
+    }
+    
 
     public void connect(final String key) {
         Thread t = new Thread() {
@@ -78,6 +52,9 @@ public class Client {
             public void run() {
                 try {
                     clientSocket = new Socket(ip, port);
+                    clientSocket.setReceiveBufferSize(maxBufferSize);
+                    clientSocket.setSendBufferSize(maxBufferSize);
+                    
                     dis = new DataInputStream(clientSocket.getInputStream());
                     dos = new DataOutputStream(clientSocket.getOutputStream());
                     dos.writeUTF(key);
@@ -85,15 +62,15 @@ public class Client {
                     if (ok) {
                         listenerData = new ListenerData(clientSocket);
                         listenerData.setRunning(true);
-                        listenerData.setEventListenerData(eventListenerData);
+                        listenerData.setEventListenerData(Client.this);
                         listenerData.start();
                     }
                     eventClient.onConnet(ok);
                 } catch (UnknownHostException e) {
-                    System.out.println("UnknownHostException: " + e);
+                    e.printStackTrace();
                     eventClient.onFailedConnect(e);
                 } catch (IOException e) {
-                    System.out.println("IOException: " + e);
+                    e.printStackTrace();
                     eventClient.onFailedConnect(e);
                 }
             }
@@ -107,6 +84,9 @@ public class Client {
             public void run() {
                 try {
                     clientSocket = new Socket(ip, port);
+                    clientSocket.setReceiveBufferSize(maxBufferSize);
+                    clientSocket.setSendBufferSize(maxBufferSize);
+                    
                     dis = new DataInputStream(clientSocket.getInputStream());
                     dos = new DataOutputStream(clientSocket.getOutputStream());
                     dos.writeUTF("");
@@ -147,6 +127,9 @@ public class Client {
             public void run() {
                 try {
                     clientSocket = new Socket(ip, port);
+                    clientSocket.setReceiveBufferSize(maxBufferSize);
+                    clientSocket.setSendBufferSize(maxBufferSize);
+                    
                     if (eventClient.validateConnect(key)) {
                         dis = new DataInputStream(clientSocket.getInputStream());
                         dos = new DataOutputStream(clientSocket.getOutputStream());
@@ -155,7 +138,7 @@ public class Client {
                         if (ok) {
                             listenerData = new ListenerData(clientSocket);
                             listenerData.setRunning(true);
-                            listenerData.setEventListenerData(eventListenerData);
+                            listenerData.setEventListenerData(Client.this);
                             listenerData.start();
                         }
                         dos.flush();
@@ -176,13 +159,13 @@ public class Client {
         };
         t.start();
     }
-    
+
     /**
      * *** METODOS PARA EL ENVIO DE PAQUETES ****
      */
-    public void sendPackage(byte [] data) {
+    public void sendPackage(byte[] data) {
         Sender sender = new Sender(data, listenerData);
-        sender.setEventSender(eventSender);
+        sender.setEventSender(this);
         sender.start();
     }
 
@@ -191,5 +174,38 @@ public class Client {
      */
     public void setEventClient(EventClient eventClient) {
         this.eventClient = eventClient;
+    }
+    
+    /**
+     * *** IMPLEMENT EVENT ****
+     */
+    @Override
+    public void onNewPackage(long size) {
+        eventClient.onNewPackage(size);
+    }
+
+    @Override
+    public void onNewTrama(int bytesRead) {
+        eventClient.onNewTrama(bytesRead);
+    }
+
+    @Override
+    public void onNewPackageComplet(byte[] data) {
+        eventClient.onNewPackageComplet(data);
+    }
+
+    @Override
+    public void onDisconnectCore(IOException e) {
+        eventClient.onDisconnectCore(e);
+    }
+
+    @Override
+    public void onSendBytes() {
+        System.out.println("paquete enviado");
+    }
+
+    @Override
+    public void onFailedSendBytes(IOException e) {
+        System.out.println("fallo al enviar el paquete: " + e.getMessage());
     }
 }

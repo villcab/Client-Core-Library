@@ -4,6 +4,7 @@
  */
 package com.firstonesoft.core.event;
 
+import java.io.IOException;
 import java.net.Socket;
 
 /**
@@ -12,7 +13,7 @@ import java.net.Socket;
  */
 public interface EventSender {
 
-    public void onSendState(boolean state, String key, Socket socket);
+    public void onSendState(boolean state, String key, Socket socket) throws IOException ;
     public void onFailedSendState(Exception e);
     public void onSendSocketBytes();
     public void onFailedSendSocketBytes(Exception e);

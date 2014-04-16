@@ -20,115 +20,23 @@ import java.util.Map;
  *
  * @author Bismarck
  */
-public class Core {
+public class Core implements EventListener, EventListenerData, EventSender {
 
+    private int maxBufferSize;
     private int port;
     private ServerSocket serverSocket;
     private Lista clientes;
     private Map<String, Object> keys;
     private EventCore eventCore;
-    private EventListener eventListener;
-    private EventListenerData eventListenerData;
-    private EventSender eventSender;
 
     public Core(int port) {
         this.port = port;
-        this.eventListenerData = new EventListenerData() {
-            @Override
-            public void onNewPackage(long size) {
-                eventCore.onNewPackage(size);
-            }
+        this.maxBufferSize = 1048576; // 1048576 Bytes = 1 Mg
+    }
 
-            @Override
-            public void onNewTrama(int bytesRead) {
-                eventCore.onNewTrama(bytesRead);
-            }
-
-            @Override
-            public void onNewPackageComplet(byte[] data) {
-                eventCore.onNewPackageComplet(data);
-            }
-
-            @Override
-            public void onDisconnectClient(String key) {
-                System.out.println("se desconecto el cliente: " + key);
-                clientes.remove(key);
-                eventCore.onDisconnectClient(key);
-            }
-        };
-
-        this.eventSender = new EventSender() {
-            @Override
-            public void onSendState(boolean state, String key, Socket socket) {
-                if (state) {
-                    ListenerData listenerData = new ListenerData(key, socket);
-                    listenerData.setRunning(true);
-                    listenerData.setEventListenerData(eventListenerData);
-                    listenerData.start();
-                    clientes.add(key, listenerData);
-                    eventCore.onConnectClient(key);
-                }
-            }
-
-            @Override
-            public void onFailedSendState(Exception e) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void onSendSocketBytes() {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void onFailedSendSocketBytes(Exception e) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void onSendClients() {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void onFailedSendClients(Exception e) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void onSendClient() {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void onFailedSendClient(Exception e) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-        };
-
-        this.eventListener = new EventListener() {
-            @Override
-            public void onConnectClient(String key, Socket socket) {
-                System.out.println("key: " + key + ", Socket: " + socket);
-                if (key.equalsIgnoreCase("")) { //se le envia todos los keys
-                    byte[] data = ObjectUtil.createBytes(keys);
-                    Sender s = new Sender(data, socket);
-                    s.start();
-                } else {
-                    if (clientes.containsKey(key)) { //no esta disponible el key
-                        Sender s = new Sender(false, socket, key);
-                        s.setEventSender(eventSender);
-                        s.start();
-                    } else { //esta disponible el key
-                        System.out.println("esta disponible el key");
-                        Sender s = new Sender(true, socket, key);
-                        s.setEventSender(eventSender);
-                        s.start();
-                    }
-                }
-            }
-        };
-
+    public Core(int port, int maxBufferSize) {
+        this.port = port;
+        this.maxBufferSize = maxBufferSize;
     }
 
     public void openSession(Map<String, Object> keys) throws IOException {
@@ -137,7 +45,7 @@ public class Core {
         this.keys = keys;
         Listener listener = new Listener(serverSocket);
         listener.setRunning(true);
-        listener.setEventListener(eventListener);
+        listener.setEventListener(this);
         listener.start();
     }
 
@@ -180,5 +88,100 @@ public class Core {
 
     public List<String> getKeysClients() {
         return clientes.getKeysClientes();
+    }
+
+    /**
+     * *** IMPLEMENT EVENT ****
+     */
+    @Override
+    public void onConnectClient(String key, Socket socket) throws IOException {
+        System.out.println("key: " + key + ", Socket: " + socket);
+        if (key.equalsIgnoreCase("")) { //se le envia todos los keys
+            socket.setReceiveBufferSize(maxBufferSize);
+            socket.setSendBufferSize(maxBufferSize);
+            byte[] data = ObjectUtil.createBytes(keys);
+            Sender s = new Sender(data, socket);
+            s.start();
+        } else {
+            if (clientes.containsKey(key)) { //no esta disponible el key
+                Sender s = new Sender(false, socket, key);
+                s.setEventSender(this);
+                s.start();
+            } else { //esta disponible el key
+                Sender s = new Sender(true, socket, key);
+                s.setEventSender(this);
+                s.start();
+            }
+        }
+    }
+
+    @Override
+    public void onNewPackage(long size) {
+        eventCore.onNewPackage(size);
+    }
+
+    @Override
+    public void onNewTrama(int bytesRead) {
+        eventCore.onNewTrama(bytesRead);
+    }
+
+    @Override
+    public void onNewPackageComplet(byte[] data) {
+        eventCore.onNewPackageComplet(data);
+    }
+
+    @Override
+    public void onDisconnectClient(String key) {
+        clientes.remove(key);
+        eventCore.onDisconnectClient(key);
+    }
+
+    @Override
+    public void onSendState(boolean state, String key, Socket socket) throws IOException {
+        if (state) {
+            socket.setReceiveBufferSize(maxBufferSize);
+            socket.setSendBufferSize(maxBufferSize);
+            ListenerData listenerData = new ListenerData(key, socket);
+            listenerData.setRunning(true);
+            listenerData.setEventListenerData(this);
+            listenerData.start();
+            clientes.add(key, listenerData);
+            eventCore.onConnectClient(key);
+        }
+    }
+
+    @Override
+    public void onFailedSendState(Exception e) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void onSendSocketBytes() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void onFailedSendSocketBytes(Exception e) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void onSendClients() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void onFailedSendClients(Exception e) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void onSendClient() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void onFailedSendClient(Exception e) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

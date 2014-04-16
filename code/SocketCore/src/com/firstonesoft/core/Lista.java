@@ -16,39 +16,39 @@ import java.util.Map;
  */
 public class Lista {
     
-    private Map<String, ListenerData> clientes;
+    private Map<String, ListenerData> clients;
     
     public Lista() {
-        clientes = new HashMap<String, ListenerData>();
+        clients = new HashMap<String, ListenerData>();
     }
     
     public void add(String key, ListenerData client) {
-        clientes.put(key, client);
+        clients.put(key, client);
     }
     
     public void remove(String key) {
-        clientes.remove(key);
+        clients.remove(key);
     }
     
     public boolean containsKey(String key) {
-        return clientes.containsKey(key);
+        return clients.containsKey(key);
     }
     
     public ListenerData getCliente(String key) {
-        return clientes.get(key);
+        return clients.get(key);
     }
     
     public List<String> getKeysClientes() {
-        Collection<ListenerData> list = clientes.values();
-        List<String> clients = new ArrayList<String>();
+        Collection<ListenerData> list = clients.values();
+        List<String> cs = new ArrayList<String>();
         for (ListenerData c: list) {
-            clients.add(c.getKey());
+            cs.add(c.getKey());
         }
-        return clients;
+        return cs;
     }
     
     public List<ListenerData> getClientes() {
-        return (List<ListenerData>) clientes.values();
+        return (List<ListenerData>) clients.values();
     }
     
 }

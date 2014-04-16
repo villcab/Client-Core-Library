@@ -4,6 +4,8 @@
  */
 package com.firstonesoft.client.event;
 
+import java.io.IOException;
+
 /**
  *
  * @author Bismarck
@@ -13,6 +15,6 @@ public interface EventListenerData {
     public void onNewPackage(long size);
     public void onNewTrama(int bytesRead);
     public void onNewPackageComplet(byte [] data);
-    public void onDisconnectCore();
+    public void onDisconnectCore(IOException e);
     
 }

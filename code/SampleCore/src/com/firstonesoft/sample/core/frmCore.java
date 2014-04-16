@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
-import javax.swing.SwingUtilities;
 
 /**
  *
@@ -45,13 +44,13 @@ public class frmCore extends javax.swing.JFrame {
 
             @Override
             public void onNewPackage(long size) {
-//                model.addElement("LLegando bytes tamaño: " + size);
+                model.addElement("LLegando bytes tamaño: " + size);
             }
 
             @Override
             public void onNewTrama(int bytesRead) {
-//                model.addElement("LLegando trama de bytes: " + bytesRead);
-                updateProgress(bytesRead);
+                model.addElement("LLegando trama de bytes: " + bytesRead);
+//                updateProgress(bytesRead);
             }
 
             @Override
@@ -185,15 +184,6 @@ public class frmCore extends javax.swing.JFrame {
         pack();
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
-
-    private void updateProgress(final int size) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                progress.setValue(size);
-            }
-        });
-    }
 
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
