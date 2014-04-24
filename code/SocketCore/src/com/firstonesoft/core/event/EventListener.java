@@ -13,6 +13,6 @@ import java.net.Socket;
  */
 public interface EventListener {
     
-    public void onConnectClient(String key, Socket socket) throws IOException ;
+    public void onConnectClient(boolean estatico, String key, Socket socket) throws IOException ;
     
 }

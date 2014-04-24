@@ -74,10 +74,10 @@ public class frmCore extends javax.swing.JFrame {
     private void init() {
         try {
             keys = new HashMap<String, Object>();
-            keys.put("key1", "tranca norte");
-            keys.put("key2", "tranca sur");
-            keys.put("key3", "tranca este");
-            keys.put("key4", "tranca oeste");
+            keys.put("key1", "Cliente A");
+            keys.put("key2", "Cliente B");
+            keys.put("key3", "Cliente C");
+            keys.put("key4", "Cliente D");
 
             jLabel2.setText(String.valueOf(0));
             core = new Core(PORT_CORE);
@@ -114,6 +114,11 @@ public class frmCore extends javax.swing.JFrame {
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("OPCIONES DEL CORE"));
 
         jButton1.setText("OPEN CORE");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
 
         jList2.setModel(modelClient);
         jScrollPane2.setViewportView(jList2);
@@ -184,6 +189,10 @@ public class frmCore extends javax.swing.JFrame {
         pack();
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jButton1ActionPerformed
 
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */

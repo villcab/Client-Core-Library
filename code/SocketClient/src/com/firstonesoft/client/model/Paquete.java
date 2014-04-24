@@ -6,7 +6,7 @@ package com.firstonesoft.client.model;
 
 /**
  *
- * @author Bismarck
+ * @author JMCM
  */
 public class Paquete {
 

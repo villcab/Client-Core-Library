@@ -4,45 +4,39 @@
  */
 package com.firstonesoft.client;
 
-import com.firstonesoft.client.event.EventSender;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.Socket;
 
 /**
  *
- * @author Bismarck
+ * @author JMCM
  */
-public class Sender extends Thread {
+public class Sender {
 
-    private byte[] data;
-    private ListenerData listenerData;
-    private EventSender eventSender;
-
-    public Sender(byte[] data, ListenerData listenerData) {
-        this.data = data;
-        this.listenerData = listenerData;
-    }
-
-    @Override
-    public void run() {
-        synchronized (this) {
-            sendBytes();
-        }
-    }
-
-    private void sendBytes() {
-        try {
-            listenerData.sendBytes(data);
-            eventSender.onSendBytes();
-        } catch (IOException e) {
-            eventSender.onFailedSendBytes(e);
-        }
+    private DataOutputStream dos;
+    
+    
+    public Sender(Socket clientSocket) throws IOException {
+        dos = new DataOutputStream(clientSocket.getOutputStream());
     }
     
     /**
-     * *** GETTER AND SETTER ****
+     * *** ENVIAR PAQUETES EN BYTES ****
      */
-    public void setEventSender(EventSender eventSender) {
-        this.eventSender = eventSender;
+    public void sendBytes(byte[] data) throws IOException {
+        dos.writeLong(data.length);
+        dos.write(data);
+        dos.flush();
     }
+    
+    public void closeSenderData() throws IOException
+    {
+        if (dos != null) {
+            dos.flush();
+            dos.close();
+       }
+    }
+    
 
 }

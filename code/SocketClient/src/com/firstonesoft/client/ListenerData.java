@@ -6,25 +6,23 @@ package com.firstonesoft.client;
 
 import com.firstonesoft.client.event.EventListenerData;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
 /**
  *
- * @author Bismarck
+ * @author JMCM
  */
 public class ListenerData extends Thread {
 
     private DataInputStream dis;
-    private DataOutputStream dos;
+    
     private boolean running;
     private EventListenerData eventListenerData;
 
     public ListenerData(Socket socket) {
         try {
             dis = new DataInputStream(socket.getInputStream());
-            dos = new DataOutputStream(socket.getOutputStream());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -49,7 +47,7 @@ public class ListenerData extends Thread {
                     }
                     eventListenerData.onNewPackageComplet(output);
                 } catch (IOException e) {
-                    closeListenerData(e);
+                    eventListenerData.onDisconnectCore(e);
                 }
             }
         }
@@ -58,29 +56,11 @@ public class ListenerData extends Thread {
     /**
      * *** CUANDO SE DESCONECTA UN CLIENTE ****
      */
-    public void closeListenerData(IOException e) {
-        try {
-            running = false;
-            if (dis != null) {
-                dis.close();
-            }
-            if (dos != null) {
-                dos.flush();
-                dos.close();
-            }
-            eventListenerData.onDisconnectCore(e);
-        } catch (IOException ex) {
-            ex.printStackTrace();
+    public void closeListenerData() throws IOException {
+        running = false;
+        if (dis != null) {
+            dis.close();
         }
-    }
-
-    /**
-     * *** ENVIAR PAQUETES EN BYTES ****
-     */
-    public void sendBytes(byte[] data) throws IOException {
-        dos.writeLong(data.length);
-        dos.write(data);
-        dos.flush();
     }
 
     /**

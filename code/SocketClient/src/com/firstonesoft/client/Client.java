@@ -6,7 +6,6 @@ package com.firstonesoft.client;
 
 import com.firstonesoft.client.event.EventClient;
 import com.firstonesoft.client.event.EventListenerData;
-import com.firstonesoft.client.event.EventSender;
 import com.firstonesoft.client.util.ObjectUtil;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -18,9 +17,9 @@ import java.util.Map;
 
 /**
  *
- * @author Bismarck
+ * @author JMCM
  */
-public class Client implements EventListenerData, EventSender {
+public class Client implements EventListenerData {
 
     private int maxBufferSize;
     
@@ -30,9 +29,10 @@ public class Client implements EventListenerData, EventSender {
     private DataInputStream dis;
     private DataOutputStream dos;
     private ListenerData listenerData;
+    private Sender sender;
     
     private EventClient eventClient;
-
+    
     public Client(String ip, int port) {
         this.ip = ip;
         this.port = port;
@@ -44,129 +44,77 @@ public class Client implements EventListenerData, EventSender {
         this.port = port;
         this.maxBufferSize = maxBufferSize;
     }
+
+    public boolean connect(boolean cerrado, final String key) throws UnknownHostException, IOException{
+        clientSocket = new Socket(getIp(), getPort());
+        clientSocket.setReceiveBufferSize(maxBufferSize);
+        clientSocket.setSendBufferSize(maxBufferSize);
+
+        dis = new DataInputStream(clientSocket.getInputStream());
+        dos = new DataOutputStream(clientSocket.getOutputStream());
+        dos.writeUTF(key);
+        dos.writeBoolean(cerrado);
+        boolean ok = dis.readBoolean();
+        if (ok) {
+            listenerData = new ListenerData(clientSocket);
+            listenerData.setRunning(true);
+            listenerData.setEventListenerData(Client.this);
+            listenerData.start();
+
+            sender = new Sender(clientSocket);
+        }else
+        {
+            clientSocket.close();
+            clientSocket = null;
+        }
+        return ok;
+    }
+
+    public Map<String, Object> requestKeys() throws UnknownHostException, IOException{
+            clientSocket = new Socket(getIp(), getPort());
+            clientSocket.setReceiveBufferSize(maxBufferSize);
+            clientSocket.setSendBufferSize(maxBufferSize);
+
+            dis = new DataInputStream(clientSocket.getInputStream());
+            dos = new DataOutputStream(clientSocket.getOutputStream());
+            dos.writeUTF("");
+            dos.writeBoolean(false);
+            int bytesRead;
+            ByteArrayOutputStream output;
+            long size = dis.readLong();
+            byte[] buffer = new byte[8388608];  // 8388608 bit => 1 mg
+            output = new ByteArrayOutputStream((int) size);
+            while (size > 0 && (bytesRead = dis.read(buffer, 0, (int) Math.min(buffer.length, size))) != -1) {
+                output.write(buffer, 0, bytesRead);
+                size -= bytesRead;
+            }
+            Object o = ObjectUtil.createObject(output.toByteArray());
+            Map<String, Object> keys = null;
+            if (o instanceof Map) 
+                keys = (Map<String, Object>) o;
+
+            disconect();
+            return keys;
+    }
     
-
-    public void connect(final String key) {
-        Thread t = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    clientSocket = new Socket(ip, port);
-                    clientSocket.setReceiveBufferSize(maxBufferSize);
-                    clientSocket.setSendBufferSize(maxBufferSize);
-                    
-                    dis = new DataInputStream(clientSocket.getInputStream());
-                    dos = new DataOutputStream(clientSocket.getOutputStream());
-                    dos.writeUTF(key);
-                    boolean ok = dis.readBoolean();
-                    if (ok) {
-                        listenerData = new ListenerData(clientSocket);
-                        listenerData.setRunning(true);
-                        listenerData.setEventListenerData(Client.this);
-                        listenerData.start();
-                    }
-                    eventClient.onConnet(ok);
-                } catch (UnknownHostException e) {
-                    e.printStackTrace();
-                    eventClient.onFailedConnect(e);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    eventClient.onFailedConnect(e);
-                }
-            }
-        };
-        t.start();
-    }
-
-    public void connect() {
-        Thread t = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    clientSocket = new Socket(ip, port);
-                    clientSocket.setReceiveBufferSize(maxBufferSize);
-                    clientSocket.setSendBufferSize(maxBufferSize);
-                    
-                    dis = new DataInputStream(clientSocket.getInputStream());
-                    dos = new DataOutputStream(clientSocket.getOutputStream());
-                    dos.writeUTF("");
-                    int bytesRead;
-                    ByteArrayOutputStream output;
-                    try {
-                        long size = dis.readLong();
-                        byte[] buffer = new byte[8388608];  // 8388608 bit => 1 mg
-                        output = new ByteArrayOutputStream((int) size);
-                        while (size > 0 && (bytesRead = dis.read(buffer, 0, (int) Math.min(buffer.length, size))) != -1) {
-                            output.write(buffer, 0, bytesRead);
-                            size -= bytesRead;
-                        }
-                        Object o = ObjectUtil.createObject(output.toByteArray());
-                        if (o instanceof Map) {
-                            Map<String, Object> keys = (Map<String, Object>) o;
-                            eventClient.onReceiveDataKeys(keys);
-                        }
-                    } catch (IOException e) {
-                        System.out.println(e);
-                        eventClient.onFailedReceiveDataKeys(e);
-                    }
-                } catch (UnknownHostException e) {
-                    System.out.println(e);
-                    eventClient.onFailedConnect(e);
-                } catch (IOException e) {
-                    System.out.println(e);
-                    eventClient.onFailedConnect(e);
-                }
-            }
-        };
-        t.start();
-    }
-
-    public void connectWithValidate(final String key) {
-        Thread t = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    clientSocket = new Socket(ip, port);
-                    clientSocket.setReceiveBufferSize(maxBufferSize);
-                    clientSocket.setSendBufferSize(maxBufferSize);
-                    
-                    if (eventClient.validateConnect(key)) {
-                        dis = new DataInputStream(clientSocket.getInputStream());
-                        dos = new DataOutputStream(clientSocket.getOutputStream());
-                        dos.writeUTF(key);
-                        boolean ok = dis.readBoolean();
-                        if (ok) {
-                            listenerData = new ListenerData(clientSocket);
-                            listenerData.setRunning(true);
-                            listenerData.setEventListenerData(Client.this);
-                            listenerData.start();
-                        }
-                        dos.flush();
-                        dos.close();
-                        dis.close();
-                        eventClient.onConnet(ok);
-                    } else {
-                        eventClient.onFailedConnectWithValidate("El key no existe en la validacion del cliente");
-                    }
-                } catch (UnknownHostException e) {
-                    System.out.println(e);
-                    eventClient.onFailedConnect(e);
-                } catch (IOException e) {
-                    System.out.println(e);
-                    eventClient.onFailedConnect(e);
-                }
-            }
-        };
-        t.start();
+    public void disconect() throws IOException   
+    {
+        if (listenerData != null)
+        {
+            listenerData.setRunning(false);
+            listenerData.closeListenerData();
+        }
+        if (sender != null)
+            sender.closeSenderData();
+        if (clientSocket != null)
+            clientSocket.close();
     }
 
     /**
      * *** METODOS PARA EL ENVIO DE PAQUETES ****
      */
-    public void sendPackage(byte[] data) {
-        Sender sender = new Sender(data, listenerData);
-        sender.setEventSender(this);
-        sender.start();
+    public void sendPackage(byte[] data) throws IOException {
+        sender.sendBytes(data);
     }
 
     /**
@@ -196,16 +144,53 @@ public class Client implements EventListenerData, EventSender {
 
     @Override
     public void onDisconnectCore(IOException e) {
-        eventClient.onDisconnectCore(e);
+        try{
+            sender.closeSenderData();
+            listenerData.closeListenerData();
+            eventClient.onDisconnectCore(e);
+        }catch(IOException io)
+        {
+            io.printStackTrace();
+        }
     }
 
-    @Override
-    public void onSendBytes() {
-        System.out.println("paquete enviado");
+  
+    /**
+     * GETTERS Y SETTERS PARA LA IP Y PUERTO
+     */
+    
+    /**
+     * @return the port
+     */
+    public int getPort() {
+        return port;
     }
 
-    @Override
-    public void onFailedSendBytes(IOException e) {
-        System.out.println("fallo al enviar el paquete: " + e.getMessage());
+    /**
+     * @param port the port to set
+     */
+    public void setPort(int port) {
+        this.port = port;
     }
+
+    /**
+     * @return the ip
+     */
+    public String getIp() {
+        return ip;
+    }
+
+    /**
+     * @param ip the ip to set
+     */
+    public void setIp(String ip) {
+        this.ip = ip;
+    }
+
+    public boolean isConnected()
+    {
+        return clientSocket!= null && clientSocket.isConnected();
+    }
+    
+    
 }

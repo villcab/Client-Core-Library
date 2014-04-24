@@ -14,7 +14,7 @@ import java.io.ObjectOutputStream;
 
 /**
  *
- * @author Bismarck
+ * @author JMCM
  */
 public class ObjectUtil {
     

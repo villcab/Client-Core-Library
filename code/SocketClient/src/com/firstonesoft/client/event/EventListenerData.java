@@ -8,7 +8,7 @@ import java.io.IOException;
 
 /**
  *
- * @author Bismarck
+ * @author JMCM
  */
 public interface EventListenerData {
     

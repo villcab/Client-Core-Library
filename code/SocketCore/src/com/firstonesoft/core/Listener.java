@@ -34,7 +34,8 @@ public class Listener extends Thread {
                     clientSocket = serverSocket.accept();
                     DataInputStream dis = new DataInputStream(clientSocket.getInputStream());
                     String key = dis.readUTF();
-                    eventListener.onConnectClient(key, clientSocket);
+                    boolean estatico = dis.readBoolean();
+                    eventListener.onConnectClient(estatico,key, clientSocket);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

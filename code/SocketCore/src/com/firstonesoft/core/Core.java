@@ -94,24 +94,30 @@ public class Core implements EventListener, EventListenerData, EventSender {
      * *** IMPLEMENT EVENT ****
      */
     @Override
-    public void onConnectClient(String key, Socket socket) throws IOException {
+    public void onConnectClient(boolean estatico, String key, Socket socket) throws IOException {
         System.out.println("key: " + key + ", Socket: " + socket);
         if (key.equalsIgnoreCase("")) { //se le envia todos los keys
             socket.setReceiveBufferSize(maxBufferSize);
             socket.setSendBufferSize(maxBufferSize);
             byte[] data = ObjectUtil.createBytes(keys);
             Sender s = new Sender(data, socket);
+            s.setEventSender(this);
             s.start();
         } else {
+            boolean result;
             if (clientes.containsKey(key)) { //no esta disponible el key
-                Sender s = new Sender(false, socket, key);
-                s.setEventSender(this);
-                s.start();
+                result = false;
             } else { //esta disponible el key
-                Sender s = new Sender(true, socket, key);
-                s.setEventSender(this);
-                s.start();
+                if (estatico) // Esta restringido a keys solo de la lista de keys del core
+                {
+                    result = !keys.containsKey(key);
+                }
+                else
+                    result = true;
             }
+            Sender s = new Sender(result, socket, key);
+            s.setEventSender(this);
+            s.start();
         }
     }
 
@@ -152,36 +158,36 @@ public class Core implements EventListener, EventListenerData, EventSender {
 
     @Override
     public void onFailedSendState(Exception e) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void onSendSocketBytes() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void onFailedSendSocketBytes(Exception e) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void onSendClients() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void onFailedSendClients(Exception e) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void onSendClient() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void onFailedSendClient(Exception e) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }
