@@ -128,6 +128,7 @@ public class frmClient extends javax.swing.JFrame implements EventClient {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jButton5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jTextField1)
                     .addComponent(jComboBox1, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -136,8 +137,7 @@ public class frmClient extends javax.swing.JFrame implements EventClient {
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jButton1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton4))
-                    .addComponent(jButton5))
+                        .addComponent(jButton4)))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -159,7 +159,7 @@ public class frmClient extends javax.swing.JFrame implements EventClient {
                 .addComponent(jButton2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton3)
-                .addContainerGap(39, Short.MAX_VALUE))
+                .addContainerGap(161, Short.MAX_VALUE))
         );
 
         jList1.setBorder(javax.swing.BorderFactory.createTitledBorder("CONSOLE"));
@@ -174,8 +174,8 @@ public class frmClient extends javax.swing.JFrame implements EventClient {
                 .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 486, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 266, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -205,11 +205,11 @@ public class frmClient extends javax.swing.JFrame implements EventClient {
             }else
             {
                 result = cliente.connect(true,jComboBox1.getSelectedItem().toString());
-                if (result) {
-                    model.addElement("Se conecto al Core correctamente");
-                } else {
-                    model.addElement("El Alias ya existe, intente con otro");
-                }
+            }
+            if (result) {
+                model.addElement("Se conecto al Core correctamente");
+            } else {
+                model.addElement("El Alias ya existe, intente con otro");
             }
             jButton1.setEnabled(! result);
         }catch(UnknownHostException uhe)
@@ -378,7 +378,8 @@ public class frmClient extends javax.swing.JFrame implements EventClient {
 
     @Override
     public void onNewPackageComplet(byte[] data) {
-        
+        String text = new String(data);
+        model.addElement("RECIBIDO : " + text);
     }
 
     @Override

@@ -43,17 +43,17 @@ public class ListenerData extends Thread {
                 byte [] output;
                 try {
                     long size = dis.readLong();
-//                    eventListenerData.onNewPackage(size);
+                    eventListenerData.onNewPackage(size);
                     byte[] buffer = new byte[1048576];  // 1048576 byte => 1 mg
                     output = new byte[(int)size];
                     while (posRead < size && (bytesRead = dis.read(buffer, 0, (int) Math.min(buffer.length, size))) != -1) {
-//                        eventListenerData.onNewTrama(bytesRead);
+                        eventListenerData.onNewTrama(bytesRead);
                         System.arraycopy(buffer, 0, output, posRead, bytesRead);
                         posRead += bytesRead;
                     }
                     eventListenerData.onNewPackageComplet(output);
                 } catch (IOException e) {
-                    closeListenerData(e);
+                    onExceptionListening(e);
                 }
             }
         }
@@ -62,7 +62,7 @@ public class ListenerData extends Thread {
     /**
      * *** CUANDO SE DESCONECTA UN CLIENTE ****
      */
-    public void closeListenerData(IOException e) {
+    public void closeListenerData() {
         try {
             running = false;
             if (dis != null) {
@@ -72,10 +72,27 @@ public class ListenerData extends Thread {
                 dos.flush();
                 dos.close();
             }
-            eventListenerData.onDisconnectClient(key);
         } catch (IOException ex) {
             ex.printStackTrace();
         }
+        eventListenerData.onDisconnectClient(key);
+    }
+    
+    public void onExceptionListening(IOException ioe) {
+        try {
+            running = false;
+            if (dis != null) {
+                dis.close();
+            }
+            if (dos != null) {
+                dos.flush();
+                dos.close();
+            }
+            
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        eventListenerData.onExceptionListening(this.getKey(),ioe);
     }
 
     /**

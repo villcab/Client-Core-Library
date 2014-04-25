@@ -16,7 +16,7 @@ import java.net.UnknownHostException;
 import java.util.Map;
 
 /**
- *
+ * Clase que se encarga de hacer la interaccion con el Core para recibir y enviar informacion
  * @author JMCM
  */
 public class Client implements EventListenerData {
@@ -33,18 +33,37 @@ public class Client implements EventListenerData {
     
     private EventClient eventClient;
     
+    /**
+     * Constructor
+     * @param ip del Core
+     * @param port del Core
+     */
     public Client(String ip, int port) {
         this.ip = ip;
         this.port = port;
         this.maxBufferSize = 1048576; // 1048576 Bytes = 1 Mg
     }
 
+    /**
+     * Constructor
+     * @param ip del Core
+     * @param port del Core
+     * @param maxBufferSize Tamanio para los buffers del socket que tendra maximo
+     */
     public Client(String ip, int port, int maxBufferSize) {
         this.ip = ip;
         this.port = port;
         this.maxBufferSize = maxBufferSize;
     }
 
+    /**
+     * Metodo para conectar con el Core
+     * @param cerrado Parametro que indica si el key debe ser de la lista de keys del server, si es true, en caso de que sea false, se puede utilizar cualquier key siempre y cuando no se repita
+     * @param key Key con el que  el cliente trata de conectarse
+     * @return Devuelve un valor booleano que indica si se conecto o no
+     * @throws UnknownHostException
+     * @throws IOException 
+     */
     public boolean connect(boolean cerrado, final String key) throws UnknownHostException, IOException{
         clientSocket = new Socket(getIp(), getPort());
         clientSocket.setReceiveBufferSize(maxBufferSize);
@@ -70,6 +89,12 @@ public class Client implements EventListenerData {
         return ok;
     }
 
+    /**
+     * Metodo para obtener los keys que tiene el Core para poder hacer conexiones 
+     * @return Un Map que contiene Key y Objeto que el Core tiene
+     * @throws UnknownHostException
+     * @throws IOException 
+     */
     public Map<String, Object> requestKeys() throws UnknownHostException, IOException{
             clientSocket = new Socket(getIp(), getPort());
             clientSocket.setReceiveBufferSize(maxBufferSize);
@@ -97,6 +122,10 @@ public class Client implements EventListenerData {
             return keys;
     }
     
+    /**
+     * Metodo para desconectar este cliente del Core
+     * @throws IOException 
+     */
     public void disconect() throws IOException   
     {
         if (listenerData != null)
@@ -111,22 +140,22 @@ public class Client implements EventListenerData {
     }
 
     /**
-     * *** METODOS PARA EL ENVIO DE PAQUETES ****
+     * Enviar un paquete al server
+     * @param DATA que se envia solo al Core
+     * @throws IOException 
      */
     public void sendPackage(byte[] data) throws IOException {
         sender.sendBytes(data);
     }
 
     /**
-     * *** GETTER AND SETTER ****
+     * Instancia para que escuche los eventos generados
+     * @param EventClient 
      */
     public void setEventClient(EventClient eventClient) {
         this.eventClient = eventClient;
     }
     
-    /**
-     * *** IMPLEMENT EVENT ****
-     */
     @Override
     public void onNewPackage(long size) {
         eventClient.onNewPackage(size);
@@ -153,40 +182,26 @@ public class Client implements EventListenerData {
             io.printStackTrace();
         }
     }
-
-  
-    /**
-     * GETTERS Y SETTERS PARA LA IP Y PUERTO
-     */
     
     /**
-     * @return the port
+     * @return Puerto del Core
      */
     public int getPort() {
         return port;
     }
 
     /**
-     * @param port the port to set
-     */
-    public void setPort(int port) {
-        this.port = port;
-    }
-
-    /**
-     * @return the ip
+     * @return IP del Core
      */
     public String getIp() {
         return ip;
     }
 
+    
     /**
-     * @param ip the ip to set
+     * Devuelve true o false si esta conectado al Core
+     * @return 
      */
-    public void setIp(String ip) {
-        this.ip = ip;
-    }
-
     public boolean isConnected()
     {
         return clientSocket!= null && clientSocket.isConnected();

@@ -37,7 +37,7 @@ public class Listener extends Thread {
                     boolean estatico = dis.readBoolean();
                     eventListener.onConnectClient(estatico,key, clientSocket);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    
                 }
             }
         }

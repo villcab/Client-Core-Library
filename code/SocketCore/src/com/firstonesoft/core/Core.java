@@ -28,71 +28,127 @@ public class Core implements EventListener, EventListenerData, EventSender {
     private Lista clientes;
     private Map<String, Object> keys;
     private EventCore eventCore;
+    private Listener listener;
 
+    
+    /**
+     * Constructor
+     * @param port Puerto habilitado para recibir a los Clientes 
+     */
     public Core(int port) {
         this.port = port;
         this.maxBufferSize = 1048576; // 1048576 Bytes = 1 Mg
     }
 
+    /**
+     * Constructor
+     * @param port Puerto habilitado para recibir a los Clientes
+     * @param maxBufferSize Tamanio maximo de buffer que puede tener el Core
+     */
     public Core(int port, int maxBufferSize) {
         this.port = port;
         this.maxBufferSize = maxBufferSize;
     }
 
+    /**
+     * Inicia la escucha del lado del Core para recibir conexiones y acceder a datos.
+     * @param keys Conjunto de llaves con sus objetos para que los clientes puedan conectarse de manera estatica
+     * @throws IOException 
+     */
     public void openSession(Map<String, Object> keys) throws IOException {
         this.serverSocket = new ServerSocket(port);
         this.clientes = new Lista();
         this.keys = keys;
-        Listener listener = new Listener(serverSocket);
+        listener = new Listener(serverSocket);
         listener.setRunning(true);
         listener.setEventListener(this);
         listener.start();
     }
 
-    public void closeSession() {
+    /**
+     * Metodo para cerrar el Core y todos los clientes con los que esta conectado
+     * @throws IOException 
+     */
+    public void closeSession() throws IOException {
+        listener.setRunning(false);
+        for (ListenerData ld : clientes.getClientes())
+        {
+            ld.closeListenerData();
+        }
+        serverSocket.close();
     }
 
     /**
-     * *** METODOS PARA EL ENVIO DE PAQUETES ****
+     * Metodo para enviar un paquete a un cliente
+     * @param key Cliente
+     * @param data Objeto a enviar
      */
-    //ENVIA A UN CLIENTE EN ESPECIFICO
     public void sendPackage(String key, byte[] data) {
-        List<ListenerData> list = new ArrayList<ListenerData>();
-        list.add(clientes.getCliente(key));
-        Sender sender = new Sender(data, list);
+        Sender sender = new Sender(data, clientes.getCliente(key));
+        sender.setEventSender(this);
         sender.start();
     }
 
-    //ENVIA A UNA LISTA DE CLIENTES EN ESPECIFICO
+    /**
+     * Metodo para enviar un paquete a un conjunto de clientes
+     * @param keys Clientes a los que se enviara la informacion
+     * @param data Objeto a enviar
+     */
     public void sendPackage(List<String> keys, byte[] data) {
         List<ListenerData> list = new ArrayList<ListenerData>();
         for (String s : keys) {
             list.add(clientes.getCliente(s));
         }
         Sender sender = new Sender(data, list);
-        sender.start();
-    }
-
-    //ENVIA A TODOS LOS CLIENTES
-    public void sendAllPackage(byte[] data) {
-        Sender sender = new Sender(data, clientes.getClientes());
+        sender.setEventSender(this);
         sender.start();
     }
 
     /**
-     * *** GETTER AND SETTER ****
+     * Metodo para enviar un paquete a todos los clientes que estan conectados
+     * Realizar un Broadcast
+     * @param data Objeto a enviar
+     */
+    public void sendAllPackage(byte[] data) {
+        Sender sender = new Sender(data, clientes.getClientes());
+        sender.setEventSender(this);
+        sender.start();
+    }
+
+    /**
+     * Escuchador de los eventos que suceden en el Core
+     * @param eventCore Escuchador
      */
     public void setEventCore(EventCore eventCore) {
         this.eventCore = eventCore;
     }
 
+    /**
+     * Obtener la lista de keys existentes conectados
+     * @return Lista
+     */
     public List<String> getKeysClients() {
         return clientes.getKeysClientes();
     }
 
     /**
-     * *** IMPLEMENT EVENT ****
+     * Devuelve el puerto con el que esta trabajando el Core
+     * @return 
      */
+    public int getPort()
+    {
+        return this.port;
+    }
+    
+    /**
+     * Devuelve el tamanio actual del buffer
+     * @return 
+     */
+    public int getMaxSizeBuffer()
+    {
+        return this.maxBufferSize;
+    }
+    
     @Override
     public void onConnectClient(boolean estatico, String key, Socket socket) throws IOException {
         System.out.println("key: " + key + ", Socket: " + socket);
@@ -100,7 +156,7 @@ public class Core implements EventListener, EventListenerData, EventSender {
             socket.setReceiveBufferSize(maxBufferSize);
             socket.setSendBufferSize(maxBufferSize);
             byte[] data = ObjectUtil.createBytes(keys);
-            Sender s = new Sender(data, socket);
+            Sender s = new Sender(data, socket, key);
             s.setEventSender(this);
             s.start();
         } else {
@@ -157,37 +213,23 @@ public class Core implements EventListener, EventListenerData, EventSender {
     }
 
     @Override
-    public void onFailedSendState(Exception e) {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void onSendClients(List<String> keys) {
+        eventCore.onSendClients(keys);
+    }
+
+
+    @Override
+    public void onSendClient(String key) {
+        eventCore.onSendClient(key);
     }
 
     @Override
-    public void onSendSocketBytes() {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void onFailedSend(IOException e, String key) {
+        eventCore.onFailedSend(e, key);
     }
 
     @Override
-    public void onFailedSendSocketBytes(Exception e) {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void onSendClients() {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void onFailedSendClients(Exception e) {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void onSendClient() {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void onFailedSendClient(Exception e) {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void onExceptionListening(String key, IOException ioe) {
+        eventCore.onExceptionListening(key, ioe);
     }
 }

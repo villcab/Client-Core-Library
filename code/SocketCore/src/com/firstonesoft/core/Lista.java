@@ -48,7 +48,16 @@ public class Lista {
     }
     
     public List<ListenerData> getClientes() {
-        return (List<ListenerData>) clients.values();
+        return new ArrayList<ListenerData>(clients.values());
+    }
+    
+    public void closeConections()
+    {
+        Collection<ListenerData> cls = clients.values();
+        for (ListenerData ld : cls)
+        {
+            ld.closeListenerData();
+        }
     }
     
 }

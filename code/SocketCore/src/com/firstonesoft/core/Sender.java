@@ -8,6 +8,7 @@ import com.firstonesoft.core.event.EventSender;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -20,7 +21,7 @@ public class Sender extends Thread {
     private static final int TO_CLIENTS = 1;
     private static final int TO_SOCKET = 2;
     private static final int TO_SOCKET_STATE = 3;
-    
+
     private int accion;
     private byte[] data;
     private ListenerData client;
@@ -42,7 +43,7 @@ public class Sender extends Thread {
         this.accion = TO_CLIENTS;
     }
 
-    public Sender(byte[] data, Socket socket) {
+    public Sender(byte[] data, Socket socket, String key) {
         this.data = data;
         this.socket = socket;
         this.accion = TO_SOCKET;
@@ -57,13 +58,13 @@ public class Sender extends Thread {
 
     @Override
     public void run() {
-        synchronized (this) {
             switch (accion) {
                 case TO_CLIENT:
                     sendByteClient();
                     break;
                 case TO_CLIENTS:
                     sendBytesClients();
+                    break;
                 case TO_SOCKET:
                     sendSocketBytes();
                     break;
@@ -71,27 +72,29 @@ public class Sender extends Thread {
                     sendSocketState();
                     break;
             }
-        }
     }
-    
+
     private void sendByteClient() {
         try {
             client.sendBytes(data);
-            eventSender.onSendClient();
+            eventSender.onSendClient(client.getKey());
         } catch (IOException e) {
-            eventSender.onFailedSendClient(e);
+            eventSender.onFailedSend(e, client.getKey());
         }
     }
 
     private void sendBytesClients() {
-        try {
-            for (ListenerData c : clients) {
+        List<String> enviados = new ArrayList<String>();
+        for (ListenerData c : clients) {
+            try {
+
                 c.sendBytes(data);
+                enviados.add(c.getKey());
+            } catch (IOException e) {
+                eventSender.onFailedSend(e, c.getKey());
             }
-            eventSender.onSendClients();
-        } catch (Exception e) {
-            eventSender.onFailedSendClients(e);
         }
+        eventSender.onSendClients(enviados);
     }
 
     private void sendSocketBytes() {
@@ -100,10 +103,8 @@ public class Sender extends Thread {
             dos.writeLong(data.length);
             dos.write(data, 0, data.length);
             dos.flush();
-            eventSender.onSendSocketBytes();
         } catch (IOException e) {
-            System.out.println(e);
-            eventSender.onFailedSendSocketBytes(e);
+            eventSender.onFailedSend(e, key);
         }
     }
 
@@ -114,7 +115,7 @@ public class Sender extends Thread {
             dos.flush();
             eventSender.onSendState(state, key, socket);
         } catch (IOException e) {
-            eventSender.onFailedSendState(e);
+            eventSender.onFailedSend(e, this.client.getKey());
         }
     }
 

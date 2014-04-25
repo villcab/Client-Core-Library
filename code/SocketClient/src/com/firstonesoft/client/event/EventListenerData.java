@@ -12,9 +12,9 @@ import java.io.IOException;
  */
 public interface EventListenerData {
     
-    public void onNewPackage(long size);
-    public void onNewTrama(int bytesRead);
-    public void onNewPackageComplet(byte [] data);
-    public void onDisconnectCore(IOException e);
+    void onNewPackage(long size);
+    void onNewTrama(int bytesRead);
+    void onNewPackageComplet(byte [] data);
+    void onDisconnectCore(IOException e);
     
 }
