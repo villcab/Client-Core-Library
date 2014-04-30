@@ -21,7 +21,7 @@ import javax.swing.JFileChooser;
 
 /**
  *
- * @author Bismarck
+ * @author FirstOneSoft
  */
 public class frmClient extends javax.swing.JFrame implements EventClient {
 
@@ -31,6 +31,8 @@ public class frmClient extends javax.swing.JFrame implements EventClient {
     private DefaultListModel model = new DefaultListModel();
     private DefaultComboBoxModel modelCombo = new DefaultComboBoxModel();
     private Client cliente;
+    
+    private Map<String,Object> keys;
     
     public frmClient() {
         initComponents();
@@ -198,13 +200,14 @@ public class frmClient extends javax.swing.JFrame implements EventClient {
             {
                 if (jTextField1.getText().trim().length() > 0)
                 {
-                    result = cliente.connect(false,jTextField1.getText());            
+                    Object o = "CLIENTE " + jTextField1.getText();
+                    result = cliente.connectOpened(jTextField1.getText(), o);            
                     jButton1.setEnabled(false);
                 }else
                     model.addElement("Debe ingresar un key");
             }else
             {
-                result = cliente.connect(true,jComboBox1.getSelectedItem().toString());
+                result = cliente.connectClosed((String)keys.keySet().toArray()[jComboBox1.getSelectedIndex()]);
             }
             if (result) {
                 model.addElement("Se conecto al Core correctamente");
@@ -270,7 +273,7 @@ public class frmClient extends javax.swing.JFrame implements EventClient {
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
         try{
             jComboBox1.setVisible(true);
-            Map<String,Object> keys= cliente.requestKeys();
+            keys = cliente.requestKeys();
 
             modelCombo.removeAllElements();
             Collection<Object> c = keys.values();

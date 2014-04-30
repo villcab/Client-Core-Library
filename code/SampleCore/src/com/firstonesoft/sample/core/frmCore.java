@@ -18,7 +18,7 @@ import javax.swing.ImageIcon;
 
 /**
  *
- * @author Bismarck
+ * @author FirstOneSoft
  */
 public class frmCore extends javax.swing.JFrame {
 
@@ -28,39 +28,46 @@ public class frmCore extends javax.swing.JFrame {
     private Core core;
     private EventCore eventCore;
     private Map<String, Object> keys;
+    
+    private Map<String, Object> conectados;
 
     public frmCore() {
         
         initComponents();
         this.eventCore = new EventCore() {
             @Override
-            public void onConnectClient(String key) {
-                modelClient.addElement(key);
+            public void onConnectClientClosed(String key) {
+                Object o = keys.get(key);
+                conectados.put(key, o);
+                modelClient.addElement(o);
                 jLabel2.setText(String.valueOf(modelClient.size()));
             }
 
             @Override
             public void onDisconnectClient(String key) {
-                modelClient.removeElement(key);
-                jLabel2.setText(String.valueOf(modelClient.size()));
+                Object o = conectados.get(key);
+                modelClient.removeElement(o);
+                conectados.remove(key);
+                jLabel2.setText(String.valueOf(conectados.size()));
             }
 
             @Override
-            public void onNewPackage(long size) {
-                model.addElement("LLegando bytes tamaño: " + size);
+            public void onNewPackage(long size, String key) {
+                model.addElement("LLegando bytes tamaño: " + size + " Client : " + key);
                 
                 progress.setMaximum((int)size);
                 progress.setValue(0);
             }
 
             @Override
-            public void onNewTrama(int bytesRead) {
+            public void onNewTrama(int bytesRead, String key) {
+                System.out.println("Bytes Read : " + bytesRead + " Cliente : " + key);
                 progress.setValue(progress.getValue()+bytesRead);
             }
 
             @Override
-            public void onNewPackageComplet(byte[] data) {
-                model.addElement("Bytes completos: " + data.length);
+            public void onNewPackageComplet(byte[] data, String key) {
+                model.addElement("Bytes completos: " + data.length + " Cliente : " + key);
                 Object o = ObjectUtil.createObject(data);
                 if (o instanceof ImageIcon) {
                     ImageIcon i = (ImageIcon) o;
@@ -96,12 +103,22 @@ public class frmCore extends javax.swing.JFrame {
             public void onExceptionListening(String key, IOException ioe) {
                 model.addElement("Se detuvo el Core, error : " + ioe.getMessage() + "   Cliente : " + key);
             }
+
+
+            @Override
+            public void onConnectClientOpened(String key, Object o) {
+                modelClient.addElement(o);
+                conectados.put(key, o);
+                jLabel2.setText(String.valueOf(modelClient.size()));
+            }
         };
         init();
     }
 
     private void init() {
         try {
+            conectados = new HashMap<String, Object>();
+            
             keys = new HashMap<String, Object>();
             keys.put("key1", "Cliente A");
             keys.put("key2", "Cliente B");
@@ -254,19 +271,24 @@ public class frmCore extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        List<Object> values = jList2.getSelectedValuesList();
-        if (values.size() == 1)
+        int[] values = jList2.getSelectedIndices();
+        if (values.length == 1)
         {
             String text = jTextArea1.getText();
-            core.sendPackage(values.get(0).toString(), text.getBytes());
+            core.sendPackage((String)conectados.keySet().toArray()[values[0]], text.getBytes());
         }else
             model.addElement("Solo debe seleccionar uno");
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        List<String> values = jList2.getSelectedValuesList();
+        int[] values = jList2.getSelectedIndices();
+        
+        List<String> keys = new ArrayList<String>();
+        for (int i = 0; i < values.length; i++) {
+            keys.add((String)conectados.keySet().toArray()[values[i]]);
+        }
         String text = jTextArea1.getText();
-        core.sendPackage(values, text.getBytes());
+        core.sendPackage(keys, text.getBytes());
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed

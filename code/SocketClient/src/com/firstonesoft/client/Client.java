@@ -64,7 +64,7 @@ public class Client implements EventListenerData {
      * @throws UnknownHostException
      * @throws IOException 
      */
-    public boolean connect(boolean cerrado, final String key) throws UnknownHostException, IOException{
+    public boolean connectClosed(final String key) throws UnknownHostException, IOException{
         clientSocket = new Socket(getIp(), getPort());
         clientSocket.setReceiveBufferSize(maxBufferSize);
         clientSocket.setSendBufferSize(maxBufferSize);
@@ -72,7 +72,44 @@ public class Client implements EventListenerData {
         dis = new DataInputStream(clientSocket.getInputStream());
         dos = new DataOutputStream(clientSocket.getOutputStream());
         dos.writeUTF(key);
-        dos.writeBoolean(cerrado);
+        dos.writeBoolean(true);
+        boolean ok = dis.readBoolean();
+        if (ok) {
+            listenerData = new ListenerData(clientSocket);
+            listenerData.setRunning(true);
+            listenerData.setEventListenerData(Client.this);
+            listenerData.start();
+
+            sender = new Sender(clientSocket);
+        }else
+        {
+            clientSocket.close();
+            clientSocket = null;
+        }
+        return ok;
+    }
+    
+    /**
+     * Metodo para conectar con el Core
+     * @param cerrado Parametro que indica si el key debe ser de la lista de keys del server, si es true, en caso de que sea false, se puede utilizar cualquier key siempre y cuando no se repita
+     * @param key Key con el que  el cliente trata de conectarse
+     * @return Devuelve un valor booleano que indica si se conecto o no
+     * @throws UnknownHostException
+     * @throws IOException 
+     */
+    public boolean connectOpened(final String key, Object o) throws UnknownHostException, IOException{
+        clientSocket = new Socket(getIp(), getPort());
+        clientSocket.setReceiveBufferSize(maxBufferSize);
+        clientSocket.setSendBufferSize(maxBufferSize);
+
+        dis = new DataInputStream(clientSocket.getInputStream());
+        dos = new DataOutputStream(clientSocket.getOutputStream());
+        dos.writeUTF(key);
+        dos.writeBoolean(false);
+        byte[] data = ObjectUtil.createBytes(o);
+        dos.writeLong(data.length);
+        dos.write(data, 0, data.length);
+        dos.flush();
         boolean ok = dis.readBoolean();
         if (ok) {
             listenerData = new ListenerData(clientSocket);
@@ -103,7 +140,7 @@ public class Client implements EventListenerData {
             dis = new DataInputStream(clientSocket.getInputStream());
             dos = new DataOutputStream(clientSocket.getOutputStream());
             dos.writeUTF("");
-            dos.writeBoolean(false);
+            dos.writeBoolean(true);
             int bytesRead;
             ByteArrayOutputStream output;
             long size = dis.readLong();

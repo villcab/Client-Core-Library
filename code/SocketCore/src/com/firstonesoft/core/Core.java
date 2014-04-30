@@ -150,7 +150,7 @@ public class Core implements EventListener, EventListenerData, EventSender {
     }
     
     @Override
-    public void onConnectClient(boolean estatico, String key, Socket socket) throws IOException {
+    public void onConnectClientClosed(String key, Socket socket) throws IOException {
         System.out.println("key: " + key + ", Socket: " + socket);
         if (key.equalsIgnoreCase("")) { //se le envia todos los keys
             socket.setReceiveBufferSize(maxBufferSize);
@@ -164,32 +164,31 @@ public class Core implements EventListener, EventListenerData, EventSender {
             if (clientes.containsKey(key)) { //no esta disponible el key
                 result = false;
             } else { //esta disponible el key
-                if (estatico) // Esta restringido a keys solo de la lista de keys del core
-                {
-                    result = !keys.containsKey(key);
-                }
-                else
-                    result = true;
+//                if (estatico) // Esta restringido a keys solo de la lista de keys del core
+                    result = keys.containsKey(key);
+//                else
+//                    result = true;
             }
             Sender s = new Sender(result, socket, key);
             s.setEventSender(this);
             s.start();
+            eventCore.onConnectClientClosed(key);
         }
     }
 
     @Override
-    public void onNewPackage(long size) {
-        eventCore.onNewPackage(size);
+    public void onNewPackage(long size, String key) {
+        eventCore.onNewPackage(size,key);
     }
 
     @Override
-    public void onNewTrama(int bytesRead) {
-        eventCore.onNewTrama(bytesRead);
+    public void onNewTrama(int bytesRead,String key) {
+        eventCore.onNewTrama(bytesRead, key);
     }
 
     @Override
-    public void onNewPackageComplet(byte[] data) {
-        eventCore.onNewPackageComplet(data);
+    public void onNewPackageComplet(byte[] data, String key) {
+        eventCore.onNewPackageComplet(data, key);
     }
 
     @Override
@@ -208,7 +207,6 @@ public class Core implements EventListener, EventListenerData, EventSender {
             listenerData.setEventListenerData(this);
             listenerData.start();
             clientes.add(key, listenerData);
-            eventCore.onConnectClient(key);
         }
     }
 
@@ -231,5 +229,32 @@ public class Core implements EventListener, EventListenerData, EventSender {
     @Override
     public void onExceptionListening(String key, IOException ioe) {
         eventCore.onExceptionListening(key, ioe);
+    }
+
+    @Override
+    public void onConnectClientOpened(String key, Socket socket, Object o) throws IOException {
+        System.out.println("key: " + key + ", Socket: " + socket);
+        if (key.equalsIgnoreCase("")) { //se le envia todos los keys
+            socket.setReceiveBufferSize(maxBufferSize);
+            socket.setSendBufferSize(maxBufferSize);
+            byte[] data = ObjectUtil.createBytes(keys);
+            Sender s = new Sender(data, socket, key);
+            s.setEventSender(this);
+            s.start();
+        } else {
+            boolean result;
+            if (clientes.containsKey(key)) { //no esta disponible el key
+                result = false;
+            } else { //esta disponible el key
+//                if (estatico) // Esta restringido a keys solo de la lista de keys del core
+//                    result = keys.containsKey(key);
+//                else
+                    result = true;
+            }
+            Sender s = new Sender(result, socket, key);
+            s.setEventSender(this);
+            s.start();
+            eventCore.onConnectClientOpened(key, o);
+        }
     }
 }

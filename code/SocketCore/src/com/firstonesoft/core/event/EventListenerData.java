@@ -12,9 +12,9 @@ import java.io.IOException;
  */
 public interface EventListenerData {
     
-    public void onNewPackage(long size);
-    public void onNewTrama(int bytesRead);
-    public void onNewPackageComplet(byte [] data);
+    public void onNewPackage(long size,String key);
+    public void onNewTrama(int bytesRead,String key);
+    public void onNewPackageComplet(byte [] data,String key);
     public void onDisconnectClient(String key);
     
     public void onExceptionListening(String key, IOException ioe);

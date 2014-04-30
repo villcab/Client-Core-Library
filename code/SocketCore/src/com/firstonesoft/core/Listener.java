@@ -5,6 +5,8 @@
 package com.firstonesoft.core;
 
 import com.firstonesoft.core.event.EventListener;
+import com.firstonesoft.core.util.ObjectUtil;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -35,7 +37,22 @@ public class Listener extends Thread {
                     DataInputStream dis = new DataInputStream(clientSocket.getInputStream());
                     String key = dis.readUTF();
                     boolean estatico = dis.readBoolean();
-                    eventListener.onConnectClient(estatico,key, clientSocket);
+                    if (estatico)
+                        eventListener.onConnectClientClosed(key, clientSocket);
+                    else
+                    {
+                        ByteArrayOutputStream output;
+                        int bytesRead;
+                        long size = dis.readLong();
+                        byte[] buffer = new byte[8388608];  // 8388608 bit => 1 mg
+                        output = new ByteArrayOutputStream((int) size);
+                        while (size > 0 && (bytesRead = dis.read(buffer, 0, (int) Math.min(buffer.length, size))) != -1) {
+                            output.write(buffer, 0, bytesRead);
+                            size -= bytesRead;
+                        }
+                        Object o = ObjectUtil.createObject(output.toByteArray());
+                        eventListener.onConnectClientOpened(key, clientSocket, o);
+                    }
                 } catch (IOException e) {
                     
                 }

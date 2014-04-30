@@ -43,15 +43,15 @@ public class ListenerData extends Thread {
                 byte [] output;
                 try {
                     long size = dis.readLong();
-                    eventListenerData.onNewPackage(size);
+                    eventListenerData.onNewPackage(size, key);
                     byte[] buffer = new byte[1048576];  // 1048576 byte => 1 mg
                     output = new byte[(int)size];
                     while (posRead < size && (bytesRead = dis.read(buffer, 0, (int) Math.min(buffer.length, size))) != -1) {
-                        eventListenerData.onNewTrama(bytesRead);
+                        eventListenerData.onNewTrama(bytesRead, key);
                         System.arraycopy(buffer, 0, output, posRead, bytesRead);
                         posRead += bytesRead;
                     }
-                    eventListenerData.onNewPackageComplet(output);
+                    eventListenerData.onNewPackageComplet(output, key);
                 } catch (IOException e) {
                     onExceptionListening(e);
                 }
@@ -92,6 +92,7 @@ public class ListenerData extends Thread {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
+        eventListenerData.onDisconnectClient(key);
         eventListenerData.onExceptionListening(this.getKey(),ioe);
     }
 
