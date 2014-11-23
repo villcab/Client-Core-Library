@@ -360,14 +360,14 @@ public class frmClient extends javax.swing.JFrame implements EventClient {
 //    }
 
 
-    @Override
-    public void onReceiveDataKeys(Map<String, Object> keys) {
-        modelCombo.removeAllElements();
-        Collection<Object> c = keys.values();
-        for (Object o : c) {
-            modelCombo.addElement(o);
-        }
-    }
+//    @Override
+//    public void onReceiveDataKeys(Map<String, Object> keys) {
+//        modelCombo.removeAllElements();
+//        Collection<Object> c = keys.values();
+//        for (Object o : c) {
+//            modelCombo.addElement(o);
+//        }
+//    }
 
     @Override
     public void onNewPackage(long size) {

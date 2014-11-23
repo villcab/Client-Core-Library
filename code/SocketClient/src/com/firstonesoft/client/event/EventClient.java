@@ -13,7 +13,6 @@ import java.util.Map;
  */
 public interface EventClient {
     
-    public void onReceiveDataKeys(Map<String, Object> keys);
     public void onNewPackage(long size);
     public void onNewTrama(int bytesRead);
     public void onNewPackageComplet(byte [] data);

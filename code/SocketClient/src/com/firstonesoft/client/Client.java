@@ -213,7 +213,8 @@ public class Client implements EventListenerData {
         try{
             sender.closeSenderData();
             listenerData.closeListenerData();
-            eventClient.onDisconnectCore(e);
+            if (eventClient != null)
+                eventClient.onDisconnectCore(e);
         }catch(IOException io)
         {
             io.printStackTrace();
